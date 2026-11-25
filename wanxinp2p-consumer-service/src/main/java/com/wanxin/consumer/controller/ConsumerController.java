@@ -44,6 +44,17 @@ public class ConsumerController implements ConsumerAPI {
     private String accessKey;
     @Value("${minio.secretKey}")
     private String secretKey;
+    /**
+     * 没有百度 OCR 密钥的环境(如云上演示)开启后, 身份证正面直接返回下面配置的固定身份信息, 不调用百度.
+     */
+    @Value("${baidu.mock.enabled:false}")
+    private boolean ocrMockEnabled;
+    @Value("${baidu.mock.idCardName:测试用户}")
+    private String ocrMockName;
+    @Value("${baidu.mock.idCardNo:}")
+    private String ocrMockIdNo;
+    @Value("${baidu.mock.idCardAddress:}")
+    private String ocrMockAddress;
     @Autowired
     private ConsumerService consumerService;
     @Autowired
@@ -152,6 +163,15 @@ public class ConsumerController implements ConsumerAPI {
     @ApiOperation("提交身份证图片给百度AI进行识别")
     @ApiImplicitParam(name = "flag", value = "正反面", required = true, dataType = "string", paramType = "query")
     public RestResponse<IdCardDTO> imageRecognition(@RequestParam("file") MultipartFile multipartFile, @RequestParam("flag") String flag) throws IOException {
+        if (ocrMockEnabled && "front".equals(flag)) {
+            IdCardDTO mock = new IdCardDTO();
+            mock.setFlag(flag);
+            mock.setIdCardName(ocrMockName);
+            mock.setIdCardNo(ocrMockIdNo);
+            mock.setIdCardAddress(ocrMockAddress);
+            return RestResponse.success(mock);
+        }
+
         String info = null;
         if ("front".equals(flag)) {
             info = BaiDuOrcIdCardUtil.idCardFront(multipartFile.getBytes());
