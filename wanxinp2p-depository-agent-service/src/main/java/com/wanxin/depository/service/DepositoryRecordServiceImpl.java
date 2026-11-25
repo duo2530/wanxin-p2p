@@ -52,7 +52,7 @@ public class DepositoryRecordServiceImpl implements DepositoryRecordService {
     private String withdraw = "WITHDRAW";
 
     private GatewayRequest encapsulatedGatewayRequest(String serviceName, Object data, String uri) {
-        String depositoryUrl = configService.getDepositoryUrl() + uri;
+        String depositoryUrl = configService.getDepositoryPublicUrl() + uri;
         String p2pCode = configService.getP2pCode();
         String p2pPrivateKeyKey = configService.getP2pPrivateKey();
 
