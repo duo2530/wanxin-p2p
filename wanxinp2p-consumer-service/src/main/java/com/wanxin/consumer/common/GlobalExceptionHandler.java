@@ -42,7 +42,7 @@ public class GlobalExceptionHandler {
             return new RestResponse<Nullable>(415, "不支持媒体类型");
         }
 
-        log.error("[系统异常]-" + e.getMessage());
+        log.error("[系统异常]-" + e.getMessage(), e);
         return new RestResponse<Nullable>(CommonErrorCode.UNKOWN.getCode(), CommonErrorCode.UNKOWN.getDesc());
     }
 
