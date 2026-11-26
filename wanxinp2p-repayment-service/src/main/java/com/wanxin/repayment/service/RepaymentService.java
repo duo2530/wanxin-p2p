@@ -3,8 +3,13 @@ package com.wanxin.repayment.service;
 import com.wanxin.api.repayment.model.RepaymentPlanDTO;
 import com.wanxin.api.repayment.model.RepaymentRequest;
 import com.wanxin.api.transaction.model.ProjectWithTendersDTO;
+import com.wanxin.common.domain.PageVO;
 import com.wanxin.repayment.entity.RepaymentDetail;
 import com.wanxin.repayment.entity.RepaymentPlan;
+import com.wanxin.repayment.model.RepaymentExecution;
+import com.wanxin.repayment.model.RepaymentPlanQuery;
+import com.wanxin.repayment.model.RepaymentPlanVO;
+import com.wanxin.repayment.model.RepaymentRecordVO;
 
 import java.util.List;
 
@@ -25,9 +30,39 @@ public interface RepaymentService {
     /**
      * 执行还款
      *
-     * @param date
+     * @param date yyyy-MM-dd
+     * @return 到期条数和已发起确认还款的条数
      */
-    void executeRepayment(String date);
+    RepaymentExecution executeRepayment(String date);
+
+    /**
+     * 后台分页查询还款计划
+     *
+     * @param query    查询条件
+     * @param pageNo   页码, 从 1 开始
+     * @param pageSize 每页条数
+     * @return
+     */
+    PageVO<RepaymentPlanVO> queryRepaymentPlans(RepaymentPlanQuery query, int pageNo, int pageSize);
+
+    /**
+     * 查询借款人的还款计划
+     *
+     * @param consumerId 借款人用户标识
+     * @param projectId  标的标识, 为空查全部借款
+     * @return
+     */
+    List<RepaymentPlanVO> queryConsumerRepaymentPlans(Long consumerId, Long projectId);
+
+    /**
+     * 分页查询借款人已完成的还款
+     *
+     * @param consumerId 借款人用户标识
+     * @param pageNo     页码, 从 1 开始
+     * @param pageSize   每页条数
+     * @return
+     */
+    PageVO<RepaymentRecordVO> queryConsumerRepaymentRecords(Long consumerId, int pageNo, int pageSize);
 
     /**
      * 确认还款处理

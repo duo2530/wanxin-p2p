@@ -12,6 +12,7 @@ import com.wanxin.repayment.mapper.ReceivablePlanMapper;
 import com.wanxin.repayment.mapper.RepaymentDetailMapper;
 import com.wanxin.repayment.mapper.RepaymentPlanMapper;
 import com.wanxin.repayment.message.RepaymentProducer;
+import com.wanxin.repayment.model.RepaymentExecution;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -25,6 +26,7 @@ import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -62,7 +64,9 @@ public class RepaymentServiceImplTest {
         when(depositoryAgentApiAgent.userAutoPreTransaction(any()))
                 .thenReturn(RestResponse.success(DepositoryReturnCode.RETURN_CODE_00000.getCode()));
 
-        repaymentService.executeRepayment("2026-12-26");
+        RepaymentExecution execution = repaymentService.executeRepayment("2026-12-26");
+
+        assertEquals(new RepaymentExecution("2026-12-26", 1, 1), execution);
 
         ArgumentCaptor<RepaymentDetail> detail = ArgumentCaptor.forClass(RepaymentDetail.class);
         verify(repaymentDetailMapper).insert(detail.capture());
@@ -83,5 +87,19 @@ public class RepaymentServiceImplTest {
         assertEquals(new BigDecimal("100.41"), confirm.getValue().getAmount());
         assertEquals("PRO_1", confirm.getValue().getProjectNo());
         assertEquals(detail.getValue().getRequestNo(), confirm.getValue().getPreRequestNo());
+    }
+
+    @Test
+    public void executeRepaymentDoesNotConfirmWhenFreezeIsRejected() {
+        RepaymentPlan plan = new RepaymentPlan();
+        plan.setId(1002L);
+        plan.setAmount(new BigDecimal("100.41"));
+        when(planMapper.selectDueRepayment("2026-12-26")).thenReturn(Collections.singletonList(plan));
+        when(depositoryAgentApiAgent.userAutoPreTransaction(any())).thenReturn(RestResponse.success("30042"));
+
+        RepaymentExecution execution = repaymentService.executeRepayment("2026-12-26");
+
+        assertEquals(new RepaymentExecution("2026-12-26", 1, 0), execution);
+        verify(repaymentProducer, never()).confirmRepayment(any(), any());
     }
 }

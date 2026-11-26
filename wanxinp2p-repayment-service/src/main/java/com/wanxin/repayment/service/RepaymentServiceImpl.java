@@ -1,7 +1,9 @@
 package com.wanxin.repayment.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wanxin.api.depository.model.UserAutoPreTransactionRequest;
 import com.wanxin.api.repayment.model.EqualInterestRepayment;
 import com.wanxin.api.repayment.model.RepaymentDetailRequest;
@@ -23,6 +25,12 @@ import com.wanxin.repayment.mapper.ReceivablePlanMapper;
 import com.wanxin.repayment.mapper.RepaymentDetailMapper;
 import com.wanxin.repayment.mapper.RepaymentPlanMapper;
 import com.wanxin.repayment.message.RepaymentProducer;
+import com.wanxin.repayment.model.RepaymentExecution;
+import com.wanxin.repayment.model.RepaymentPlanQuery;
+import com.wanxin.repayment.model.RepaymentPlanRow;
+import com.wanxin.repayment.model.RepaymentPlanVO;
+import com.wanxin.repayment.model.RepaymentRecordRow;
+import com.wanxin.repayment.model.RepaymentRecordVO;
 import com.wanxin.repayment.utils.RepaymentUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +42,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author yuelimin
@@ -65,10 +74,11 @@ public class RepaymentServiceImpl implements RepaymentService {
     }
 
     @Override
-    public void executeRepayment(String date) {
+    public RepaymentExecution executeRepayment(String date) {
         // 查询所有到期的还款计划
         List<RepaymentPlanDTO> repaymentPlanList = selectDueRepayment(date);
-        repaymentPlanList.forEach(repaymentPlanDTO -> {
+        int submittedCount = 0;
+        for (RepaymentPlanDTO repaymentPlanDTO : repaymentPlanList) {
             RepaymentPlan repaymentPlan = convertDto2Entity(repaymentPlanDTO);
             // 生成还款明细(未同步)
             RepaymentDetail repaymentDetail = saveRepaymentDetail(repaymentPlan);
@@ -80,8 +90,29 @@ public class RepaymentServiceImpl implements RepaymentService {
                 RepaymentRequest repaymentRequest = generateRepaymentRequest(repaymentPlan, preRequestNo);
                 // 发送确认还款事务消息
                 repaymentProducer.confirmRepayment(repaymentPlan, repaymentRequest);
+                submittedCount++;
             }
-        });
+        }
+        return new RepaymentExecution(date, repaymentPlanList.size(), submittedCount);
+    }
+
+    @Override
+    public PageVO<RepaymentPlanVO> queryRepaymentPlans(RepaymentPlanQuery query, int pageNo, int pageSize) {
+        IPage<RepaymentPlanRow> page = planMapper.selectPlanPage(new Page<>(pageNo, pageSize), query);
+        List<RepaymentPlanVO> content = page.getRecords().stream().map(RepaymentPlanVO::from).collect(Collectors.toList());
+        return new PageVO<>(content, page.getTotal(), pageNo, pageSize);
+    }
+
+    @Override
+    public List<RepaymentPlanVO> queryConsumerRepaymentPlans(Long consumerId, Long projectId) {
+        return planMapper.selectConsumerPlans(consumerId, projectId).stream().map(RepaymentPlanVO::from).collect(Collectors.toList());
+    }
+
+    @Override
+    public PageVO<RepaymentRecordVO> queryConsumerRepaymentRecords(Long consumerId, int pageNo, int pageSize) {
+        IPage<RepaymentRecordRow> page = repaymentDetailMapper.selectConsumerRecordPage(new Page<>(pageNo, pageSize), consumerId);
+        List<RepaymentRecordVO> content = page.getRecords().stream().map(RepaymentRecordVO::from).collect(Collectors.toList());
+        return new PageVO<>(content, page.getTotal(), pageNo, pageSize);
     }
 
     /**
