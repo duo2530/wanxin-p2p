@@ -296,7 +296,7 @@ public class RepaymentServiceImpl implements RepaymentService {
         // 还款方式, 只针对等额本息
         String repaymentWay = projectDTO.getRepaymentWay();
 
-        if (repaymentWay.equals(RepaymentWayCode.FIXED_REPAYMENT)) {
+        if (RepaymentWayCode.FIXED_REPAYMENT.getCode().equals(repaymentWay)) {
             // 生成还款计划
             EqualInterestRepayment fixedRepayment = RepaymentUtil.fixedRepayment(projectDTO.getAmount(), projectDTO.getBorrowerAnnualRate(), month, projectDTO.getCommissionAnnualRate());
 
