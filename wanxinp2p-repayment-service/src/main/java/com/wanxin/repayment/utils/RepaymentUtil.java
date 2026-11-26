@@ -41,8 +41,18 @@ public class RepaymentUtil {
         // 总利息
         equalInterestRepayment.setTotalInterest(getRepaymentTotalInterest(invest, monthRate, month));
         // 设置平台抽息
-        double comMonthRateRate = commission.doubleValue() / 12;
-        equalInterestRepayment.setCommissionMap(getRepaymentList(invest, comMonthRateRate, month));
+        Map<Integer, BigDecimal> commissionMap;
+        if (commission == null || commission.signum() == 0) {
+            // 平台不抽息时月利率为 0, 等额本息公式分母为 0, 直接按每期 0 处理
+            commissionMap = new HashMap<Integer, BigDecimal>();
+            for (int i = 1; i < month + 1; i++) {
+                commissionMap.put(i, BigDecimal.ZERO.setScale(2));
+            }
+        } else {
+            double comMonthRateRate = commission.doubleValue() / 12;
+            commissionMap = getRepaymentList(invest, comMonthRateRate, month);
+        }
+        equalInterestRepayment.setCommissionMap(commissionMap);
         // 返回结果
         return equalInterestRepayment;
     }

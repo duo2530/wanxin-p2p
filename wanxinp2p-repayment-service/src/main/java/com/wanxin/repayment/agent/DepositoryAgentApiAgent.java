@@ -27,7 +27,7 @@ public interface DepositoryAgentApiAgent {
      * @param repaymentRequest
      * @return
      */
-    @PostMapping("/depository-agent/l/confirm-repayment")
+    @PostMapping("/depository/l/confirm-repayment")
     RestResponse<String> confirmRepayment(RepaymentRequest repaymentRequest);
 
     /**
