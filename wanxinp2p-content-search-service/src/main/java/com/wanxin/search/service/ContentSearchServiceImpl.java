@@ -55,12 +55,11 @@ public class ContentSearchServiceImpl implements ContentSearchService {
             boolQueryBuilder.must(QueryBuilders.rangeQuery("period").lte(queryParamsDTO.getEndPeriod()));
         }
 
-        // 默认为满标查询
-        boolQueryBuilder.must(QueryBuilders.termQuery("projectstatus", "FULLY"));
-
-        // 精确匹配状态为满标
+        // 默认查询募集中的标的;传入标的状态时按传入值匹配
         if (queryParamsDTO.getProjectStatus() != null) {
-            boolQueryBuilder.must(QueryBuilders.termQuery("projectstatus", "FULLY"));
+            boolQueryBuilder.must(QueryBuilders.termQuery("projectstatus", queryParamsDTO.getProjectStatus()));
+        } else {
+            boolQueryBuilder.must(QueryBuilders.termQuery("projectstatus", "COLLECTING"));
         }
 
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
