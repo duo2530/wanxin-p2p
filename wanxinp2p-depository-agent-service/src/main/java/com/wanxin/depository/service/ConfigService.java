@@ -28,6 +28,16 @@ public class ConfigService {
     }
 
     /**
+     * 银行存管系统对浏览器可访问的地址, 用于返回给前端做页面跳转;
+     * 未配置时与服务端调用地址相同
+     *
+     * @return
+     */
+    public String getDepositoryPublicUrl() {
+        return config.getProperty("depository.publicUrl", getDepositoryUrl());
+    }
+
+    /**
      * 银行存管系统公钥
      *
      * @return
