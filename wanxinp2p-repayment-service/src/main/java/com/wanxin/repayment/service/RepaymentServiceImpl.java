@@ -136,7 +136,7 @@ public class RepaymentServiceImpl implements RepaymentService {
         }
 
         RepaymentPlan repaymentPlan = new RepaymentPlan();
-        BeanUtils.copyProperties(repaymentPlan, repaymentPlanDTO);
+        BeanUtils.copyProperties(repaymentPlanDTO, repaymentPlan);
         return repaymentPlan;
     }
 
