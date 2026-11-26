@@ -68,12 +68,12 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String loansApprovalStatus(Long id, String approveStatus, String commission) {
-        if ("3".equals(approveStatus)) {
+        if ("4".equals(approveStatus)) {
             Project project = new Project();
             project.setId(id);
             project.setProjectStatus(ProjectCode.MISCARRY.getCode());
             projectMapper.updateById(project);
-        } else if ("4".equals(approveStatus)) {
+        } else if ("3".equals(approveStatus)) {
             // 第一阶段: 生成放款明细
             // 获取标的信息
             final Project project = projectMapper.selectById(id);
@@ -235,7 +235,7 @@ public class ProjectServiceImpl implements ProjectService {
             // 公式:此次投标后的剩余未投金额 = 目前剩余未投金额 - 本次投标金额
             BigDecimal subtract = remainingAmount.subtract(amount);
             int result = subtract.compareTo(configService.getMiniInvestmentAmount());
-            if (result < 0) {
+            if (result < 0 && subtract.compareTo(BigDecimal.ZERO) != 0) {
                 throw new BusinessException(TransactionErrorCode.E_150111);
             }
 
@@ -362,6 +362,7 @@ public class ProjectServiceImpl implements ProjectService {
             ProjectDTO projectDTO = convertProjectEntityToDTO(project);
             projectDTO.setRemainingAmount(getProjectRemainingAmount(project));
             projectDTO.setTenderCount(tenderMapper.selectCount(new LambdaQueryWrapper<Tender>().eq(Tender::getProjectId, project.getId())));
+            projectDTOList.add(projectDTO);
         });
         return projectDTOList;
     }
@@ -414,10 +415,6 @@ public class ProjectServiceImpl implements ProjectService {
 
             // 根据结果修改状态
             Project pro = new Project();
-            if (status == 2) {
-                pro.setProjectStatus(ProjectCode.FULLY.getCode());
-            }
-
             if (status == 4) {
                 pro.setProjectStatus(ProjectCode.MISCARRY.getCode());
             }
